@@ -181,3 +181,9 @@ docker-compose -f /opt/nginx/docker-compose.yaml up -d
 ```sh
 docker exec reverse-proxy nginx -s reload
 ```
+
+- Access application:
+
+```sh
+https://cms.fago-labs.online
+```
