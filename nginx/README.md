@@ -1,11 +1,52 @@
 # Setup nginx & simple wordpress app, autogen let's encrypt certificate
 
-## Step 1: Buy a domain on GoDaddy, e.g: fago-labs.online
-## Step 2. Register Cloudflare account & add domain
-## Step 3: Get Cloudflare API key 
-## Step 4: Install docker & docker-compose on proxy host
+### Step 1: Buy a domain from a registrar (e.g: GoDaddy, Namecheap)
+### Step 2: Register Cloudflare account, add domain & change DNS provider to Cloudflare DNS (Key notes)
+- Register Cloudflare account
+- Add domain, then obtain 2 Cloudflare DNS server IPs
+- Change DNS provider setting on registrar to use Cloudflare DNS (2 DNS server IPs Cloudflare provided above)
 
-## Step 5: Generate let's encrypt certificate
+### Step 3: Point domain name to proxy host
+- On Cloudflare DNS setting, add an A record, point domain name to proxy public IP, e.g:
+
+```sh
+Record Type: A
+Name: cms.fago-labs.online
+Proxy IP: 171.244.232.53
+```
+
+### Step 4: Get Cloudflare API key 
+- To obtain API key
+  - Login to cloudflare dash: https://dash.cloudflare.com
+  - Click My Profile -> API Tokens -> API Keys -> View "Global API Key"
+
+### Step 5: On proxy host, install docker & docker-compose
+- Install docker
+
+```sh
+curl -fsSL https://get.docker.com -o get-docker.sh
+sh get-docker.sh
+```
+
+- Install docker-compose:
+
+```sh
+sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+```
+
+### Step 6: On upstream host, install docker & docker-compose, then setup upstream application
+- Install docker & docker-compose using script above (step 5)
+
+- Install sample application (wordpress):
+
+```sh
+git clone https://github.com/thaihust/docker-compose.git
+cd docker-compose/wordpress-mysql
+docker-compose up -d
+```
+
+### Step 7: On proxy host, generate let's encrypt certificate
 - Create certbot config for cloudflare plugin. Please change cloudflare email and cloudflare api key below: 
 
 ```sh
@@ -30,8 +71,7 @@ certbot/dns-cloudflare certonly --dns-cloudflare --dns-cloudflare-credentials /t
 rm -f /tmp/cloudflare.ini
 ```
 
-## Step 5: Setup upstream application
-## Step 6: Setup nginx & config reverse proxy on proxy host
+### Step 8: On proxy host, setup nginx & config nginx reverse proxy
 
 - Run proxy:
 
@@ -62,8 +102,8 @@ docker-compose -f /opt/nginx/docker-compose.yaml up -d
   - Change domain & upstream before config:
 
   ```sh
-  domain=cloudrity-demo.fago-labs.online
-  upstream=http://127.0.0.1:5000
+  domain=cms.fago-labs.online
+  upstream=http://127.0.0.1:8000
   ```
 
   - Add upstream config, for example:
@@ -131,6 +171,10 @@ docker-compose -f /opt/nginx/docker-compose.yaml up -d
   }
   EOF
   ```
+
+  - Sample upstream config files:
+    - Collection: https://github.com/thaihust/docker-compose/tree/master/nginx/conf.d
+    - For wordpress: https://github.com/thaihust/docker-compose/blob/master/nginx/conf.d/cms.fago-labs.online.conf
 
 - Reload nginx:
 
