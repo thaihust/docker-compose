@@ -60,11 +60,14 @@ docker-compose -f /opt/nginx/docker-compose.yaml up -d
 
 - Config upstream
   - Change domain & upstream before config:
+
 ```sh
 domain=cloudrity-demo.fago-labs.online
 upstream=http://127.0.0.1:5000
 ```
+
   - Add upstream config, for example:
+
 ```sh
 cat << EOF > /opt/nginx/conf.d/$domain.conf
 server {
