@@ -1,10 +1,24 @@
-########################## GET KEY
+# Setup nginx & simple wordpress app, autogen let's encrypt certificate
 
-mkdir -p /etc/letsencrypt /var/lib/letsencrypt
+## Step 1: Buy a domain on GoDaddy, e.g: fago-labs.online
+## Step 2. Register Cloudflare account & add domain
+## Step 3: Get Cloudflare API key 
+## Step 4: Install docker & docker-compose on proxy host
+
+## Step 5: Generate let's encrypt certificate
+- Create certbot config for cloudflare plugin. Please change cloudflare email and cloudflare api key below: 
+
+```sh
 cat << EOF > /tmp/cloudflare.ini
-dns_cloudflare_email = <cloudflare email> 
-dns_cloudflare_api_key = <cloudflare api key> 
+dns_cloudflare_email = cloudflare_email
+dns_cloudflare_api_key = cloudflare_api_key
 EOF
+```
+
+- Generate certificate
+
+```sh
+mkdir -p /etc/letsencrypt /var/lib/letsencrypt
 domain=cms.fago-labs.online
 docker pull certbot/dns-cloudflare
 docker run -it --rm --name certbot \
@@ -14,9 +28,14 @@ docker run -it --rm --name certbot \
 certbot/dns-cloudflare certonly --dns-cloudflare --dns-cloudflare-credentials /tmp/cloudflare.ini -d $domain
 
 rm -f /tmp/cloudflare.ini
+```
 
-########################## NGINX PROXY
-mkdir -p /etc/letsencrypt /var/lib/letsencrypt
+## Step 5: Setup upstream application
+## Step 6: Setup nginx & config reverse proxy on proxy host
+
+- Run proxy:
+
+```sh
 mkdir -p /opt/nginx/conf.d /opt/nginx/log
 cat << EOF > /opt/nginx/docker-compose.yaml
 version: '3'
@@ -36,10 +55,20 @@ services:
       - /var/lib/letsencrypt:/var/lib/letsencrypt
     network_mode: host
 EOF
-
 docker-compose -f /opt/nginx/docker-compose.yaml up -d
+```
+
+- Config upstream
+  - Change domain & upstream before config:
+
+```sh
 domain=cloudrity-demo.fago-labs.online
 upstream=http://127.0.0.1:5000
+```
+
+  - Add upstream config, for example:
+
+```sh
 cat << EOF > /opt/nginx/conf.d/$domain.conf
 server {
    listen 80;
@@ -101,5 +130,10 @@ server {
    }
 }
 EOF
+```
 
+- Reload nginx:
+
+```sh
 docker exec reverse-proxy nginx -s reload
+```
