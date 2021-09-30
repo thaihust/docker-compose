@@ -1,0 +1,34 @@
+version: "3.4"
+
+services:
+  app:
+    image: site_test_core
+    container_name: dangdh11_app_hehe
+    volumes:
+      - ./public/images:/app/public/images
+    environment:
+      - DB_HOST=${DB_HOST}
+      - DB_NAME=${DB_NAME}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - PORT=${PORT}
+    ports:
+      - "${HOST_PORT}:${PORT}"
+    restart: unless-stopped
+    depends_on:
+        - redis
+        - db
+  
+  db:
+    image: mongo
+    container_name: dangdh11_db_hehe
+    volumes:
+      - .docker/data/db:/data/db
+    restart: unless-stopped
+  
+  redis:
+    image: redis:5-alpine
+    container_name: dangdh11_redis_hehe
+    volumes:
+      - .docker/data/redis:/data
+    restart: unless-stopped
